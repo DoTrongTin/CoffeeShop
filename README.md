@@ -1,28 +1,35 @@
-﻿# Coffee Shop - Các Công Nghệ Lập Trình Hiện Đại
+﻿# CoffeeShop Backend
 
-Dự án mẫu quản lý quán Cà Phê, được xây dựng để phục vụ môn học **Các công nghệ lập trình hiện đại**.
+Backend Node.js/TypeScript cho hệ thống CoffeeShop. Frontend nằm ở repository `CoffeeShop-frontend`.
 
 ## 🚀 Công nghệ sử dụng
-- **React**: Thư viện UI.
-- **Vite**: Công cụ build siêu tốc.
-- **TanStack Query (React Query)**: Quản lý state server, caching, và fetching dữ liệu (đóng vai trò Controller/State manager).
-- **TypeScript**: Giúp viết code chặt chẽ và an toàn hơn.
+- **Express**: HTTP server và routing.
+- **TypeScript**: Kiểm tra kiểu tĩnh và biên dịch backend.
+- **CORS**: Cho phép frontend gọi API trong môi trường phát triển.
 
-## 📂 Cấu trúc dự án theo mô hình MVC
+## 📂 Cấu trúc dự án
 
-Source code nằm trong thư mục `src/`, được phân chia theo cấu trúc **MVC**:
+Source code được tổ chức theo module, mỗi module tách route, controller, service, repository và type:
 
 ```text
 src/
-├── models/        # (Model) - Khai báo các interface/class định nghĩa cấu trúc dữ liệu.
-├── controllers/   # (Controller) - Chứa các Custom Hooks sử dụng Tanstack Query để xử lý logic và cung cấp dữ liệu cho View.
-├── views/         # (View) - Các component React phụ trách giao diện UI, hiển thị dữ liệu từ Controller.
-├── services/      # Các hàm gọi API giao tiếp với Backend / Database.
-├── assets/        # Hình ảnh, font chữ tĩnh.
-├── components/    # File cấu trúc dùng chung (UI components như Button, Card,...).
-├── App.tsx        # Component gốc.
-└── main.tsx       # Entry point kết nối React, khởi tạo QueryClient.
+├── app.ts                  # Khởi tạo Express và đăng ký middleware/routes.
+├── server.ts               # Entry point và HTTP server.
+└── modules/
+   └── products/
+      ├── product.routes.ts
+      ├── product.controller.ts
+      ├── product.service.ts
+      ├── product.repository.ts
+      └── product.types.ts
 ```
+
+Các domain mới nên được thêm dưới `src/modules/<domain>`.
+
+## API hiện có
+
+- `GET /hello` - kiểm tra trạng thái server.
+- `GET /api/products` - lấy danh sách sản phẩm.
 
 ## 🛠 Hướng dẫn chạy dự án
 
@@ -31,7 +38,15 @@ src/
    npm install
    ```
 
-2. Khởi chạy máy chủ phát triển (Development Server):
+2. Khởi chạy máy chủ phát triển:
    ```bash
    npm run dev
+   ```
+
+Server mặc định chạy tại `http://localhost:8080`. Có thể đổi port bằng biến môi trường `PORT`.
+
+3. Build và chạy bản production:
+   ```bash
+   npm run build
+   npm start
    ```
