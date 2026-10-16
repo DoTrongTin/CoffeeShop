@@ -51,13 +51,84 @@ Example:
 curl http://localhost:8080/api/products
 ```
 
-## Authentication status
+## Authentication
 
-Authentication endpoints are not available yet. The PostgreSQL schema already reserves `users` and `refresh_tokens` for the planned JWT flow:
+JWT endpoints require a configured PostgreSQL database and an active user in the `users` table.
+
+### `POST /api/auth/login`
+
+Request:
+
+```json
+{
+  "username": "admin",
+  "password": "your-password"
+}
+```
+
+Response `200 OK`:
+
+```json
+{
+  "user": {
+    "id": 1,
+    "username": "admin",
+    "fullName": "Administrator",
+    "role": "admin"
+  },
+  "accessToken": "<jwt>",
+  "refreshToken": "<jwt>"
+}
+```
+
+### `POST /api/auth/refresh`
+
+Request:
+
+```json
+{
+  "refreshToken": "<refresh-jwt>"
+}
+```
+
+The old refresh token is revoked and a new token is issued. Reuse of a revoked token revokes its token family.
+
+### `POST /api/auth/logout`
+
+Request:
+
+```json
+{
+  "refreshToken": "<refresh-jwt>"
+}
+```
+
+Response: `204 No Content`.
+
+### `GET /api/auth/me`
+
+Header:
+
+```text
+Authorization: Bearer <access-jwt>
+```
+
+Response `200 OK`:
+
+```json
+{
+  "user": {
+    "id": 1,
+    "username": "admin",
+    "fullName": "Administrator",
+    "role": "admin"
+  }
+}
+```
+
+JWT flow:
 
 1. Login returns a short-lived access token and a refresh token.
 2. The server stores only the SHA-256 hash of the refresh token.
 3. Refresh rotates the token and revokes the old record.
 4. Logout revokes the active refresh token.
-
-Until those endpoints are implemented, product endpoints do not require an `Authorization` header.

@@ -6,7 +6,9 @@ Backend Node.js/TypeScript cho hệ thống quản lý quán cà phê. Frontend 
 
 - Node.js và TypeScript
 - Express 4
-- PostgreSQL schema tại `database/schema.sql`
+- PostgreSQL thông qua `pg`, schema tại `database/schema.sql`
+- JWT access token và refresh token rotation
+- `bcryptjs` để kiểm tra password hash
 - CORS, JSON middleware và dotenv
 
 ## Bắt đầu nhanh
@@ -27,25 +29,37 @@ curl http://localhost:8080/api/products
 
 ## Biến môi trường
 
+| Tên   | Mặc định | Mô tả                 |
+| ---   | ---      | ---                   |
 | Tên | Mặc định | Mô tả |
 | --- | --- | --- |
 | `PORT` | `8080` | Port HTTP của backend |
+| `DATABASE_URL` | - | PostgreSQL connection string |
+| `JWT_ACCESS_SECRET` | Development fallback | Secret ký access token |
+| `JWT_REFRESH_SECRET` | Development fallback | Secret ký refresh token |
+| `ACCESS_TOKEN_EXPIRES_IN` | `15m` | Thời hạn access token |
+| `REFRESH_TOKEN_EXPIRES_IN` | `7d` | Thời hạn refresh token |
 
-Tạo file `.env` ở thư mục gốc nếu cần đổi port:
+Tạo `.env` từ `.env.example`:
 
 ```env
 PORT=8080
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/coffeeshop
+JWT_ACCESS_SECRET=replace-with-a-long-random-secret
+JWT_REFRESH_SECRET=replace-with-another-long-random-secret
+ACCESS_TOKEN_EXPIRES_IN=15m
+REFRESH_TOKEN_EXPIRES_IN=7d
 ```
 
-`dotenv` được nạp khi chạy `src/server.ts`.
+Trong production, bắt buộc cấu hình hai JWT secret; fallback chỉ dùng cho development.
 
 ## Scripts
 
-| Lệnh | Mục đích |
-| --- | --- |
-| `npm run dev` | Chạy development server với watch mode |
-| `npm run build` | Biên dịch TypeScript vào `dist/` |
-| `npm start` | Chạy bản đã build |
+| Lệnh            | Mục đích                               |
+| ---             | ---                                    |
+| `npm run dev`   | Chạy development server với watch mode |
+| `npm run build` | Biên dịch TypeScript vào `dist/`       |
+| `npm start`     | Chạy bản đã build                      |
 
 Quy trình production:
 
@@ -60,13 +74,11 @@ npm start
 src/
 ├── app.ts                         # Express app, middleware và route registration.
 ├── server.ts                      # Entry point khởi động HTTP server.
+├── config/                        # Environment và PostgreSQL pool.
+├── common/                        # Error classes và middleware dùng chung.
 └── modules/
-    └── products/
-        ├── product.routes.ts      # Khai báo endpoint sản phẩm.
-        ├── product.controller.ts  # Nhận request và trả response.
-        ├── product.service.ts     # Business logic.
-        ├── product.repository.ts  # Nguồn dữ liệu hiện tại.
-        └── product.types.ts       # TypeScript types.
+    ├── auth/                      # Login, JWT, refresh và logout.
+    └── products/                  # API sản phẩm.
 ```
 
 Domain mới nên được thêm dưới `src/modules/<domain>` và giữ nguyên các lớp `routes`, `controller`, `service`, `repository` khi phù hợp.
@@ -81,13 +93,13 @@ Ví dụ chạy schema:
 psql "$DATABASE_URL" -f database/schema.sql
 ```
 
-Backend hiện tại chưa kết nối database; product repository đang dùng dữ liệu in-memory để kiểm tra API.
+Auth repository đã dùng PostgreSQL. Product repository hiện vẫn dùng dữ liệu in-memory để kiểm tra API.
 
 ## Authentication
 
-Database đã có bảng `refresh_tokens` để hỗ trợ JWT access token ngắn hạn và refresh token rotation. Bảng chỉ nên lưu hash của refresh token, không lưu token gốc.
+Database có bảng `refresh_tokens` để hỗ trợ JWT access token ngắn hạn và refresh token rotation. Backend chỉ lưu hash của refresh token, không lưu token gốc.
 
-JWT endpoints và middleware xác thực chưa được triển khai trong source hiện tại. Khi triển khai, cần bổ sung secret, thời hạn token, login, refresh, logout và middleware kiểm tra role.
+Các endpoint auth đã có: login, refresh, logout và endpoint `me` yêu cầu Bearer access token. Database phải được migrate và có user trước khi gọi login.
 
 ## API
 
